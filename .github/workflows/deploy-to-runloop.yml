@@ -29,8 +29,8 @@ jobs:
         uses: runloopai/deploy-agent@main
         with:
           api-key: ${{ secrets.RUNLOOP_API_KEY }}
-          source-type: 'git'
-          git-repository: ${{ github.server_url }}/${{ github.repository }}
+          sourceType: git
+          git-repository: ${{ github.server_url }}/${{ github.repository }}.git
           git-ref: ${{ github.ref_name }}
           agent-name: ${{ steps.set-name.outputs.name }}
           setup-commands: |
