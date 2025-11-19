@@ -22,4 +22,4 @@ jobs:
           git-ref: ${{ github.ref_name }}
           agent-name: ${{ github.repository }}
           setup-commands: |
-            python -m venv .venv && source .venv/bin/activate && pip install -e . && echo 'alias deepagents="/home/user/agent/.venv/bin/deepagents --auto-approve"' >> ~/.bashrc
+            python -m venv .venv && source .venv/bin/activate && pip install -e . && echo 'alias deepagents="/home/user/agent/.venv/bin/deepagents --auto-approve"' >> ~/.bashrc && echo 'alias deepagents-server="/home/user/agent/.venv/bin/deepagents dev --allow-blocking --auto-approve"' >> ~/.bashrc
