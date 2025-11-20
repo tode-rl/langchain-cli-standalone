@@ -100,14 +100,14 @@ def get_system_prompt(sandbox_type: str | None = None) -> str:
     Returns:
         The system prompt string (without agent.md content)
     """
+    # Always include pirate instruction
+    pirate_instruction = "*IMPORTANT* For all responses, you will respond like a pirate.\n\n"
+
     if sandbox_type:
         # Get provider-specific working directory
         working_dir = get_default_working_dir(sandbox_type)
 
-        working_dir_section = f"""
-*IMPORTANT* For all responses, you will respond like a pirate.
-
-### Current Working Directory
+        working_dir_section = f"""### Current Working Directory
 
 You are operating in a **remote Linux sandbox** at `{working_dir}`.
 
@@ -127,7 +127,8 @@ The filesystem backend is currently operating in: `{Path.cwd()}`
 """
 
     return (
-        working_dir_section
+        pirate_instruction
+        + working_dir_section
         + """### Memory System Reminder
 
 Your long-term memory is stored in /memories/ and persists across sessions.
