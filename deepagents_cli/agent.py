@@ -285,6 +285,7 @@ def create_agent_with_config(
     *,
     sandbox: SandboxBackendProtocol | None = None,
     sandbox_type: str | None = None,
+    enable_checkpointer: bool = True,
 ) -> tuple[Pregel, CompositeBackend]:
     """Create and configure an agent with the specified model and tools.
 
@@ -295,6 +296,8 @@ def create_agent_with_config(
         sandbox: Optional sandbox backend for remote execution (e.g., ModalBackend).
                  If None, uses local filesystem + shell.
         sandbox_type: Type of sandbox provider ("modal", "runloop", "daytona")
+        enable_checkpointer: Whether to set InMemorySaver as checkpointer.
+                            Set to False when deploying to LangGraph API (default: True)
 
     Returns:
         2-tuple of graph and backend
@@ -410,9 +413,11 @@ def create_agent_with_config(
             "check_typescript_dependencies": check_typescript_deps_interrupt_config,
         },
     ).with_config(config)
-    
+
     # Set checkpointer to enable Command(resume=...) functionality
-    # This is required for human-in-the-loop interrupts
-    agent.checkpointer = InMemorySaver()
-    
+    # This is required for human-in-the-loop interrupts in local/dev mode
+    # When deploying to LangGraph API, the platform handles persistence automatically
+    if enable_checkpointer:
+        agent.checkpointer = InMemorySaver()
+
     return agent, composite_backend
