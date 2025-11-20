@@ -14,7 +14,7 @@ from langgraph_api.cli import run_server
 
 from deepagents_cli.agent import create_agent_with_config, get_system_prompt
 from deepagents_cli.agent_memory import AgentMemoryMiddleware
-from deepagents_cli.config import config, console, create_model
+from deepagents_cli.config import console, create_model
 from deepagents_cli.tools import (
     check_python_dependencies,
     check_typescript_dependencies,
@@ -147,13 +147,14 @@ def create_server_agent(
 
     # Create agent with full functionality
     # Checkpointer will be set to None in the generated module to avoid pickling issues
-    agent, backend = create_agent_with_config(
+    agent, _backend = create_agent_with_config(
         model=model,
         assistant_id=agent_name,
         tools=tools,
         sandbox=None,
         sandbox_type=None,
         enable_checkpointer=False,  # Don't set InMemorySaver
+        auto_approve=auto_approve,  # Pass through auto_approve setting
     )
     return agent
 

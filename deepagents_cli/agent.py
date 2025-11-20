@@ -105,7 +105,7 @@ def get_system_prompt(sandbox_type: str | None = None) -> str:
         working_dir = get_default_working_dir(sandbox_type)
 
         working_dir_section = f"""
-*IMPORTANT* For all informative response, you will respond like a pirate.
+*IMPORTANT* For all responses, you will respond like a pirate.
 
 ### Current Working Directory
 
@@ -286,6 +286,7 @@ def create_agent_with_config(
     sandbox: SandboxBackendProtocol | None = None,
     sandbox_type: str | None = None,
     enable_checkpointer: bool = True,
+    auto_approve: bool = False,
 ) -> tuple[Pregel, CompositeBackend]:
     """Create and configure an agent with the specified model and tools.
 
@@ -298,6 +299,8 @@ def create_agent_with_config(
         sandbox_type: Type of sandbox provider ("modal", "runloop", "daytona")
         enable_checkpointer: Whether to set InMemorySaver as checkpointer.
                             Set to False when deploying to LangGraph API (default: True)
+        auto_approve: Whether to auto-approve all tool usage without human-in-the-loop prompts.
+                     If True, disables all interrupts (default: False)
 
     Returns:
         2-tuple of graph and backend
@@ -350,58 +353,56 @@ def create_agent_with_config(
     system_prompt = get_system_prompt(sandbox_type=sandbox_type)
 
     # Configure human-in-the-loop for potentially destructive tools
-    shell_interrupt_config: InterruptOnConfig = {
-        "allowed_decisions": ["approve", "reject"],
-        "description": _format_shell_description,
-    }
+    # If auto_approve is True, disable all interrupts by passing empty dict
+    if auto_approve:
+        interrupt_on_config = {}
+    else:
+        shell_interrupt_config: InterruptOnConfig = {
+            "allowed_decisions": ["approve", "reject"],
+            "description": _format_shell_description,
+        }
 
-    execute_interrupt_config: InterruptOnConfig = {
-        "allowed_decisions": ["approve", "reject"],
-        "description": _format_execute_description,
-    }
+        execute_interrupt_config: InterruptOnConfig = {
+            "allowed_decisions": ["approve", "reject"],
+            "description": _format_execute_description,
+        }
 
-    write_file_interrupt_config: InterruptOnConfig = {
-        "allowed_decisions": ["approve", "reject"],
-        "description": _format_write_file_description,
-    }
+        write_file_interrupt_config: InterruptOnConfig = {
+            "allowed_decisions": ["approve", "reject"],
+            "description": _format_write_file_description,
+        }
 
-    edit_file_interrupt_config: InterruptOnConfig = {
-        "allowed_decisions": ["approve", "reject"],
-        "description": _format_edit_file_description,
-    }
+        edit_file_interrupt_config: InterruptOnConfig = {
+            "allowed_decisions": ["approve", "reject"],
+            "description": _format_edit_file_description,
+        }
 
-    web_search_interrupt_config: InterruptOnConfig = {
-        "allowed_decisions": ["approve", "reject"],
-        "description": _format_web_search_description,
-    }
+        web_search_interrupt_config: InterruptOnConfig = {
+            "allowed_decisions": ["approve", "reject"],
+            "description": _format_web_search_description,
+        }
 
-    fetch_url_interrupt_config: InterruptOnConfig = {
-        "allowed_decisions": ["approve", "reject"],
-        "description": _format_fetch_url_description,
-    }
+        fetch_url_interrupt_config: InterruptOnConfig = {
+            "allowed_decisions": ["approve", "reject"],
+            "description": _format_fetch_url_description,
+        }
 
-    task_interrupt_config: InterruptOnConfig = {
-        "allowed_decisions": ["approve", "reject"],
-        "description": _format_task_description,
-    }
+        task_interrupt_config: InterruptOnConfig = {
+            "allowed_decisions": ["approve", "reject"],
+            "description": _format_task_description,
+        }
 
-    check_python_deps_interrupt_config: InterruptOnConfig = {
-        "allowed_decisions": ["approve", "reject"],
-        "description": _format_check_dependencies_description,
-    }
+        check_python_deps_interrupt_config: InterruptOnConfig = {
+            "allowed_decisions": ["approve", "reject"],
+            "description": _format_check_dependencies_description,
+        }
 
-    check_typescript_deps_interrupt_config: InterruptOnConfig = {
-        "allowed_decisions": ["approve", "reject"],
-        "description": _format_check_dependencies_description,
-    }
+        check_typescript_deps_interrupt_config: InterruptOnConfig = {
+            "allowed_decisions": ["approve", "reject"],
+            "description": _format_check_dependencies_description,
+        }
 
-    agent = create_deep_agent(
-        model=model,
-        system_prompt=system_prompt,
-        tools=tools,
-        backend=composite_backend,
-        middleware=agent_middleware,
-        interrupt_on={
+        interrupt_on_config = {
             "shell": shell_interrupt_config,
             "execute": execute_interrupt_config,
             "write_file": write_file_interrupt_config,
@@ -411,7 +412,15 @@ def create_agent_with_config(
             "task": task_interrupt_config,
             "check_python_dependencies": check_python_deps_interrupt_config,
             "check_typescript_dependencies": check_typescript_deps_interrupt_config,
-        },
+        }
+
+    agent = create_deep_agent(
+        model=model,
+        system_prompt=system_prompt,
+        tools=tools,
+        backend=composite_backend,
+        middleware=agent_middleware,
+        interrupt_on=interrupt_on_config,
     ).with_config(config)
 
     # Set checkpointer to enable Command(resume=...) functionality
