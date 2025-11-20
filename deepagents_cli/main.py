@@ -29,7 +29,6 @@ from deepagents_cli.tools import (
     check_typescript_dependencies,
     fetch_url,
     http_request,
-    tavily_client,
     web_search,
 )
 from deepagents_cli.token_utils import calculate_baseline_tokens

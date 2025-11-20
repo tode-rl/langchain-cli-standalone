@@ -145,15 +145,15 @@ def create_server_agent(
 
     model = create_model()
 
-    # Disable checkpointer when deploying to LangGraph API
-    # The platform handles persistence automatically in deployment
+    # Create agent with full functionality
+    # Checkpointer will be set to None in the generated module to avoid pickling issues
     agent, backend = create_agent_with_config(
         model=model,
         assistant_id=agent_name,
         tools=tools,
         sandbox=None,
         sandbox_type=None,
-        enable_checkpointer=False,
+        enable_checkpointer=False,  # Don't set InMemorySaver
     )
     return agent
 
@@ -189,8 +189,9 @@ graph = create_server_agent(
     sandbox_id={args.sandbox_id!r},
     sandbox_setup={args.sandbox_setup!r},
 )
-# Note: Checkpointer is disabled for LangGraph API deployment
-# The platform handles persistence automatically
+
+# Explicitly disable checkpointer to avoid pickling issues in remote environments
+graph.checkpointer = None
 '''
 
         # Write the module to a file
